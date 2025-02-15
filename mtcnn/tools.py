@@ -28,18 +28,8 @@ def mtcnn_annotates(img: np.ndarray, boxes:np.ndarray, points:np.ndarray, width:
 
   return img_draw
 
-def mtcnn_annotate(img: np.ndarray, box:np.ndarray, point:np.ndarray, width:int=10, annotate=False, save_path = None):
+def mtcnn_crop(img, box, save_path = None) : 
   img = Image.fromarray(img)
-  img_draw = img.copy()
-
-  draw = ImageDraw.Draw(img_draw)
-  draw.rectangle(box.tolist(), width=5)
-  if annotate : 
-    for p in point:
-        draw.rectangle((p - width).tolist() + (p + width).tolist(), width=width)
-  # extract_face(img, box)
-
-  # Crop the face from the bounding box
   x1, y1, x2, y2 = map(int, box)
   img_cropped = img.crop((x1, y1, x2, y2))  # Crop only the face
   
@@ -49,6 +39,21 @@ def mtcnn_annotate(img: np.ndarray, box:np.ndarray, point:np.ndarray, width:int=
   img_cropped = np.array(img_cropped)
   return img_cropped
 
+def mtcnn_annotate(img: np.ndarray, boxes:np.ndarray, points:np.ndarray, width:int=2, annotate=False, save_path = None):
+  annotated_img = img.copy()
+  
+  for box, point in zip(boxes, points):
+      x1, y1, x2, y2 = map(int, box)  # Convert box coordinates to integers
+      cv2.rectangle(annotated_img, (x1, y1), (x2, y2), (0, 255, 0), width)  # Draw bounding box
+      
+      # Draw facial landmarks
+      for (px, py) in point:
+          cv2.circle(annotated_img, (int(px), int(py)), width, (0, 0, 255), -1)  # Red dots
+
+  annotated_img = cv2.cvtColor(annotated_img, cv2.COLOR_BGR2RGB)
+  
+  return annotated_img
+  
 def align_face(face, face_points, reference_points):
   H, W, _ = np.float32(face).shape
   src_points = np.float32(face_points)
